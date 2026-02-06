@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard | myHaven</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* --- GLOBAL STYLES --- */
+        :root {
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-soft: rgba(139, 92, 246, 0.1);
+            --bg-dark: #0f172a;
+            --bg-sidebar: #1e293b;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --sidebar-width: 260px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        aside {
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .sidebar-header {
+            padding: 25px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .menu-list {
+            padding: 20px 15px;
+            flex-grow: 1;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            transition: var(--transition);
+        }
+
+        .topbar {
+            height: 70px;
+            background: var(--bg-sidebar);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 6px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover { background: #ef4444; color: white; }
+
+        .content { padding: 30px; }
+
+        /* DASHBOARD CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-sidebar);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card h3 { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; }
+
+        /* CHART GRID */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: var(--bg-sidebar);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-header { margin-bottom: 20px; }
+        .chart-header h3 { font-size: 1.1rem; }
+        .chart-header p { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* TABLE */
+        .table-card {
+            background: var(--bg-sidebar);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .table-header { padding: 20px; border-bottom: 1px solid var(--border); font-weight: 600; }
+
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 15px 20px; border-bottom: 1px solid var(--border); text-align: left; }
+        th { background: rgba(0,0,0,0.1); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+        td { font-size: 0.9rem; }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-success { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .status-pending { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+
+        .mobile-toggle { display: none; font-size: 1.5rem; cursor: pointer; color: var(--primary); }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            .chart-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 992px) {
+            aside { transform: translateX(-100%); }
+            aside.open { transform: translateX(0); }
+            main { margin-left: 0; width: 100%; }
+            .mobile-toggle { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar">
+        <div class="sidebar-header">myHaven</div>
+        <nav class="menu-list">
+            <a href="#" class="menu-item active">Dashboard</a>
+            <a href="#" class="menu-item">Produk</a>
+            <a href="#" class="menu-item">Transaksi</a>
+            <a href="#" class="menu-item">Laporan</a>
+            <a href="#" class="menu-item">Pengaturan</a>
+        </nav>
+    </aside>
+
+    <main>
+        <div class="topbar">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="mobile-toggle" onclick="toggleSidebar()">☰</div>
+                <h2 style="font-size: 1.2rem;">Overview Penjualan</h2>
+            </div>
+            <div class="user-profile">
+                <span style="color: var(--text-muted)">Seller: <strong>Admin Haven</strong></span>
+                <button class="logout-btn">Keluar</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Pendapatan</h3>
+                    <div class="value" style="color: var(--primary);">Rp 12.450.000</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Transaksi</h3>
+                    <div class="value">148</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Produk Aktif</h3>
+                    <div class="value">12</div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Performa Mingguan</h3>
+                        <p>Data penjualan 7 hari terakhir</p>
+                    </div>
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Performa Bulanan</h3>
+                        <p>Estimasi pendapatan per bulan di 2024</p>
+                    </div>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-header">Transaksi Terbaru</div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Produk</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#DE-1707202401</td>
+                                <td>AI Prompt Pack</td>
+                                <td>user@example.com</td>
+                                <td><span class="status-badge status-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>#DE-1707202402</td>
+                                <td>Video Course</td>
+                                <td>buyer@mail.id</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                            </tr>
+                            <tr>
+                                <td>#DE-1707202403</td>
+                                <td>E-Book Digital</td>
+                                <td>hello@domain.com</td>
+                                <td><span class="status-badge status-success">Success</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Toggle Sidebar Mobile
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // --- Konfigurasi Chart.js ---
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        // 1. Weekly Line Chart
+        const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+        new Chart(ctxWeekly, {
+            type: 'line',
+            data: {
+                labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                datasets: [{
+                    label: 'Penjualan',
+                    data: [1200000, 1900000, 1500000, 2500000, 2200000, 3000000, 3800000],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#334155' }, beginAtZero: true },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. Monthly Bar Chart
+        const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(ctxMonthly, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+                datasets: [{
+                    label: 'Pendapatan',
+                    data: [45, 52, 48, 70, 65, 88, 92, 0, 0, 0, 0, 0],
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 6,
+                    hoverBackgroundColor: '#7c3aed'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { 
+                        grid: { color: '#334155' },
+                        ticks: { callback: (value) => 'Rp ' + value + 'jt' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
